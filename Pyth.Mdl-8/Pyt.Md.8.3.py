@@ -1,4 +1,8 @@
+
+
+
 from geopy.distance import geodesic
+import mysql.connector
 
 connection = mysql.connector.connect(
          host='127.0.0.1',
@@ -14,11 +18,10 @@ Icao_code1 = input("Enter First ICAO code of an airport : ")
 Icao_code2 = input("Enter Second ICAO code of an airport : ")
 
 cursor.execute("select latitude_deg, longitude_deg from ariport where ident = {icao_code1}"
-
+airport1_cords = cursor.fetchone()
 cursor.execute("select latitude_deg, longitude_deg from ariport where ident = {icao_code2}")
-cursor = connection.cursor()
+airport2_cords = cursor.fetchone()
 
-results = cursor.fetchall()
 
     cursor.close()
     connection.close()
