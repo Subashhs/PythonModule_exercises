@@ -1,7 +1,5 @@
 import random
 
-from geopy import distance
-
 import mysql.connector
 
 connection = mysql.connector.connect(
@@ -16,11 +14,11 @@ connection = mysql.connector.connect(
 
 #Function
 #select airports for tha game
-def get_airport():
-    sql = ("select iso_country, airoprt, ident, name, type, latitude_deg, longitude_deg from airport;")
-    cursor = connection.cursor()
-    cursor.execute(sql)
-    result = cursor.fetchall()
+def get_airport(icao):
+    sql = ("select iso_country, airoprt, ident, name, type, latitude_deg, longitude_deg from airport where ident = %s;")
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute(sql, (icao,))
+    result = cursor.fetchone()
     return result
 
 
@@ -69,6 +67,7 @@ def check_goal(game_id, curnt_airport):
 
 #calculate distance between two airports
 def calculate_distance(current, target):
+    from geopy import distance
     start = get_airport_info(current)
     end = get_airport_info(target)
     return distance.distance(start['latitude_deg'], start['longitude_deg']),
