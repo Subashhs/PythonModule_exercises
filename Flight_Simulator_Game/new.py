@@ -1,6 +1,6 @@
 import random
 import mysql.connector
-from geopy import distance
+
 
 connection = mysql.connector.connect(
     host='localhost',
@@ -10,92 +10,98 @@ connection = mysql.connector.connect(
     password='Seagates',
     autocommit=True
 )
-
+print("Welcome to Flight Game!!\n~~~~~Flight Game~~~~~\n1.Start Game")
 
 # Function to select airports for the game
 def get_airport(icao):
     sql = "SELECT iso_country, airport, ident, name, type, latitude_deg, longitude_deg FROM airport WHERE ident = %s;"
     cursor = connection.cursor(dictionary=True)
-    cursor.execute(sql, (icao,))
+    cursor.execute(sql, (icao))
     result = cursor.fetchone()
     return result
-
-
-#get goals
+#player code
+def new_player():
+    if __name__ == "__main__":
+        current_airport = 'curnt_airport'  # Replace with your starting airport
+        Co2 = 2000
+        player_range = 3000
+        player = input("Player's name: ")
+        all_airports = get_airport(current_airport)
+# Get goals
 def get_goals():
-    sql = "select * from goal;"
-    cursor = connection.cursor()
+    sql = "SELECT * FROM goal;"
+    cursor = connection.cursor(dictionary=True)
     cursor.execute(sql)
     result = cursor.fetchall()
     return result
 
-#new game
+# Create a new game
 def new_game(default_Co2, ply_range, curnt_airport, pre_airport, a_irports):
-    sql = "Insert into game (Co2, player_range, location, screen_name) values (%s, %s, %s, %s);"
+    sql = "INSERT INTO game (Co2, player_range, location, screen_name) VALUES (%s, %s, %s, %s);"
     cursor = connection.cursor()
-    cursor.excute(sql(default_Co2, ply_range, curnt_airport, pre_airport, a_irports))
-    game_id = cursor.last
+    cursor.execute(sql, (default_Co2, ply_range, curnt_airport, pre_airport))
+    game_id = cursor.lastrowid
 
-    #add goals
+    # Add goals
     goals = get_goals()
     goals_list = []
     for goal in goals:
         for i in range(0, goal['maybe'], 1):
             goals_list.append(goal['id'])
 
-    #excluding starting airport
-    game_airport = a_irports[1:].copy()
-    random.shuffle(game_airport)
+    # Exclude starting airport
+    game_airports = a_irports[1:].copy()
+    random.shuffle(game_airports)
 
     for i, goal_id in enumerate(goals_list):
-        sql = "Insert into ports(game, airport, gpal) values (%s, %s, %s);"
+        sql = "INSERT INTO ports (game, airport, goal) VALUES (%s, %s, %s);"
         cursor = connection.cursor()
-        cursor.execute(sql, (game_id, game_airport[i]['ident'], goal_id))
+        cursor.execute(sql, (game_id, game_airports[i]['ident'], goal_id))
 
     return game_id
 
-#check goals for airport
+# Check goals for airport
 def check_goal(game_id, curnt_airport):
-    sql = (f"select ports.id, goal, goal.id as goal_id, name, Co2 from ports join goalon goal.id = ports.goal where game = %s and airport = %s")
+    sql = "SELECT ports.id, goal, goal.id AS goal_id, name, Co2 FROM ports JOIN goal ON goal.id = ports.goal WHERE game = %s AND airport = %s;"
     cursor = connection.cursor()
-    cursor.excute(sql, (game_id , curnt_airport))
+    cursor.execute(sql, (game_id, curnt_airport))
     result = cursor.fetchone()
     if result is None:
         return False
     return result
-#calculate distance between two airports
+
+# Calculate distance between two airports
 def calculate_distance(current, target):
     from geopy import distance
-    start = get_airport_info(current)
-    end = get_airport_info(target)
-    return distance.distance(start['latitude_deg'], start['longitude_deg']),
-    (end['latitude_deg'], end['longitude_deg']).km
+    start = get_airport(current)
+    end = get_airport(target)
+    start_coords = (start['latitude_deg'], start['longitude_deg'])
+    end_coords = (end['latitude_deg'], end['longitude_deg'])
+    return distance.distance(start_coords, end_coords).km
 
-#get airports in range
+# Get airports in range
 def airports_in_range(icao, a_irports, ply_range):
     in_range = []
-    for a_irport in a_irports:
-        dist = calculate_distance(icao, a_irport['ident'])
-        if dist <= ply_range and not dist == 0:
-            in_range.append(a_irport)
+    for airport in a_irports:
+        dist = calculate_distance(icao, airport['ident'])
+        if 0 < dist <= ply_range:
+            in_range.append(airport)
     return in_range
 
-#update location
+# Update location
 def update_location(icao, ply_range, U_Co2, game_id):
-    sql = f"update game set location = %s, player_range = %s, Co2 = %s where id %s"
+    sql = "UPDATE game SET location = %s, player_range = %s, Co2 = %s WHERE id = %s;"
     cursor = connection.cursor()
     cursor.execute(sql, (icao, ply_range, U_Co2, game_id))
-# Other functions (get_goals, new_game, check_goal, calculate_distance, airports_in_range, update_location) ...
 
 # Main game loop
 if __name__ == "__main__":
-    current_airport = 'InitialAirport'  # Replace with your starting airport
+    current_airport = 'curnt_airport'  # Replace with your starting airport
     Co2 = 2000
     player_range = 3000
     player = input("Player's name: ")
-    all_airports = get_airport()
+    all_airports = get_airport(current_airport)
 
-    # Replace 'create_game' with 'new_game' here
     game_id = new_game(Co2, player_range, current_airport, player, all_airports)
 
     game_over = False
@@ -153,7 +159,7 @@ if __name__ == "__main__":
                 ap_distance = calculate_distance(current_airport, airport['ident'])
                 print(f"{airport['name']}, icao: {airport['ident']}, distance: {ap_distance:.0f} km")
 
-            dest = input('Enter destination ICAO code: ')
+            dest = input('Enter destination airport ICAO code: ')
             selected_distance = calculate_distance(current_airport, dest)
             player_range -= selected_distance
             update_location(dest, player_range, Co2, game_id)
@@ -162,7 +168,7 @@ if __name__ == "__main__":
             if player_range < 0:
                 game_over = True
 
-        if win and current_airport == current_airport:  # Replace with your start airport
+        if win and current_airport == 'InitialAirport':
             print(f"You won! You have {Co2} ltr and {player_range} km of range left.")
             game_over = True
 
