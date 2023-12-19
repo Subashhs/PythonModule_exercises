@@ -1,63 +1,38 @@
-class Car:
-    created = 0
-    def __init__(self, reg_num, max_speed, travel_dist = 0):
-        self.reg_num = reg_num
-        self.travel_dist = travel_dist
-        self.max_speed = max_speed
-        Car.created = Car.created + 1
-
-    def accelerate(self, speed_change):
-        self.speed_change = speed_change
-
-    def drive(self, hour):
-        self.hour = hour
-
-car1 = Car("ABC-1", "100 km/h")
-car2 = Car("ABC-2", "110 km/h")
-car3 = Car("ABC-3", "120 km/h")
-car4 = Car("ABC-4", "130 km/h")
-car5 = Car("ABC-5", "140 km/h")
-car6 = Car("ABC-6", "150 km/h")
-car7 = Car("ABC-7", "160 km/h")
-car8 = Car("ABC-8", "170 km/h")
-car9 = Car("ABC-9", "180 km/h")
-car10 = Car("ABC-10", "190 km/h")
-
-
-
-
-"""import random
+import random
 
 
 class Car:
-    def __init__(self, registration_num):
+    def __init__(self, registration_num, max_speed, current_speed=0, travel_distance=0):
         self.registration_num = registration_num
-        self.max_speed = random.randint(100, 200)
-        self.current_speed = 0
-        self.travel_distance = 0
+        self.max_speed = max_speed
+        self.current_speed = current_speed
+        self.travel_distance = travel_distance
 
-    def accelerate(self):
-        speed_change = random.randint(-10, 15)
-        self.current_speed = max(0, min(self.max_speed, self.current_speed + speed_change))
+    def acceleration(self, speed_change):
+        if speed_change > 0:
+            self.current_speed = min(self.max_speed, self.current_speed + speed_change)
+        else:
+            self.current_speed = max(0, self.current_speed + speed_change)
 
-    def drive(self, hours=1):
-        self.accelerate()
-        distance_traveled = self.current_speed * hours
-        self.travel_distance += distance_traveled
+    def drive(self, hours):
+        self.travel_distance += self.current_speed * hours
 
 
-# Main program for the car race
-cars = [Car(f"ABC-{i}") for i in range(1, 11)]
+# Create a list of 10 cars with random speeds
+cars = [Car(f"ABC-{i}", f"{random.randint(100, 200)} km/h") for i in range(1, 11)]
 
-race_finished = False
-
-while not race_finished:
+# Race loop
+while all(car.travel_distance < 10000 for car in cars):
     for car in cars:
-        car.drive()
+        # Change speed with a random value between -10 and +15
+        speed_change = random.randint(-10, 15)
+        car.acceleration(speed_change)
 
-    race_finished = any(car.travel_distance >= 10000 for car in cars)
+        # Drive for one hour
+        car.drive(1)
 
-# Print out the properties of each car in a simple format
+# Print the results in a clear table
+print(f"{'Registration Number':<20} {'Max Speed':<20} {'Final Speed':<20} {'Travel Distance':<20}")
+print("=" * 80)
 for car in cars:
-    print(f"{car.registration_num}: Distance - {car.travel_distance} km, Current Speed - {car.current_speed} km/h")
-"""
+    print(f"{car.registration_num:<20} {car.max_speed:<20} {car.current_speed:<20} {car.travel_distance:<20}")
